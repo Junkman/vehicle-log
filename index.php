@@ -1,7 +1,11 @@
 <?php
 require __DIR__.'/includes/bootstrap.php';
 $mode=setting('auth_mode','remember');$error='';
-if (isset($_GET['logout'])) { unset($_SESSION['driver_id']);setcookie('vl_driver','',time()-3600,base_url(),'',['secure'=>!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off','httponly'=>true,'samesite'=>'Lax']);header('Location: '.url());exit; }
+if (isset($_GET['logout'])) {
+ unset($_SESSION['driver_id']);
+ setcookie('vl_driver','',['expires'=>time()-3600,'path'=>base_url(),'secure'=>!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off','httponly'=>true,'samesite'=>'Lax']);
+ header('Location: '.url());exit;
+}
 if ($_SERVER['REQUEST_METHOD']==='POST') {
  check_csrf();
  try {
@@ -26,6 +30,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 page('Record a reading');if ($error) echo '<p class="error">'.h($error).'</p>';
 $drivers=db()->query('SELECT id,name FROM drivers WHERE active=1 ORDER BY name')->fetchAll();
 $vehicles=db()->query('SELECT id,name FROM vehicles WHERE active=1 ORDER BY name')->fetchAll();
+$lastReadings=db()->query('SELECT r.vehicle_id,r.odometer,r.recorded_at FROM readings r INNER JOIN (SELECT vehicle_id, MAX(id) AS last_id FROM readings GROUP BY vehicle_id) latest ON latest.last_id=r.id')->fetchAll();
+$lastByVehicle=[];foreach($lastReadings as $r){$lastByVehicle[(int)$r['vehicle_id']]=['km'=>(int)$r['odometer'],'date'=>$r['recorded_at']];}
+
 if (!$drivers || !$vehicles) { echo '<p>Ask the administrator to add vehicles and drivers first.</p>'; }
 elseif (!driver_id()) {
  echo '<form method="post"><input type="hidden" name="csrf" value="'.h(csrf()).'"><input type="hidden" name="identify" value="1"><label>Driver<select name="driver_id">';foreach ($drivers as $d) echo '<option value="'.(int)$d['id'].'">'.h($d['name']).'</option>';echo '</select></label>';
@@ -35,6 +42,16 @@ elseif (!driver_id()) {
 } else {
  $id=driver_id();$s=db()->prepare('SELECT name FROM drivers WHERE id=? AND active=1');$s->execute([$id]);$driver=$s->fetchColumn();
  if (!$driver) { unset($_SESSION['driver_id']);echo '<p>Driver no longer active. <a href="'.h(url('?logout=1')).'">Choose another</a>.</p>'; }
- else { echo '<p>Driver: <strong>'.h($driver).'</strong> · <a href="'.h(url('?logout=1')).'">Change driver</a></p><form method="post"><input type="hidden" name="csrf" value="'.h(csrf()).'"><input type="hidden" name="save" value="1"><label>Vehicle<select name="vehicle_id">';foreach ($vehicles as $v) echo '<option value="'.(int)$v['id'].'">'.h($v['name']).'</option>';echo '</select></label><label>Reading type<select name="reading_type"><option value="start">Start</option><option value="end">End</option></select></label><label>Odometer (km)<input name="odometer" type="number" min="0" step="1" required></label><button>Save reading</button></form>'; }
+ else {
+  echo '<p>Driver: <strong>'.h($driver).'</strong> · <a href="'.h(url('?logout=1')).'">Change driver</a></p>';
+  echo '<form method="post"><input type="hidden" name="csrf" value="'.h(csrf()).'"><input type="hidden" name="save" value="1">';
+  echo '<label>Vehicle<select name="vehicle_id" id="vehicle_id">';
+  foreach($vehicles as $v) echo '<option value="'.(int)$v['id'].'">'.h($v['name']).'</option>';
+  echo '</select></label><p id="last-reading" class="last-reading" aria-live="polite"></p>';
+  echo '<fieldset class="reading-type"><legend>Reading type</legend><label><input type="radio" name="reading_type" value="start" checked> Start</label><label><input type="radio" name="reading_type" value="end"> End</label></fieldset>';
+  echo '<label>Odometer (km)<input name="odometer" type="number" inputmode="numeric" min="0" step="1" required></label><button>Save reading</button></form>';
+  echo '<script>const lastReadings='.json_encode($lastByVehicle,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT).';const vehicle=document.getElementById("vehicle_id"),last=document.getElementById("last-reading");function updateLast(){const item=lastReadings[vehicle.value];last.textContent=item?"Last recorded: "+item.km.toLocaleString()+" km ("+item.date+")":"No previous reading for this vehicle";}vehicle.addEventListener("change",updateLast);updateLast();</script>';
+ }
+
 }
 end_page();
