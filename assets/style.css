@@ -39,3 +39,21 @@ th { color: var(--primary); }
 .reading-type input { width: auto; margin: 0; accent-color: var(--primary); }
 .reading-type label:has(input:checked) { background: var(--subtle); border-color: var(--primary); }
 @media (max-width: 600px) { main { margin: 0; padding: 1rem; border-radius: 0; } header { flex-wrap: wrap; } }
+
+/* V1.1 installation-wide themes. Forest is the default. */
+body.theme-ocean { --page:#f2f6fa; --primary:#28577a; --primary-hover:#1e435e; --accent:#d7a64b; --text:#273d4c; --border:#a8becd; --subtle:#eaf1f7; }
+body.theme-slate { --page:#f3f4f6; --primary:#344256; --primary-hover:#263243; --accent:#e68a42; --text:#283443; --border:#b4bdc9; --subtle:#e9edf2; }
+body.theme-burgundy { --page:#faf6ef; --primary:#713e48; --primary-hover:#552e36; --accent:#c29a65; --text:#493139; --border:#cbb8b6; --subtle:#f6eae6; }
+.site-footer { max-width:700px; margin:0 auto 1.5rem; padding:0 1.5rem; text-align:center; color:var(--text); opacity:.65; font-size:.8rem; }
+.theme-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; margin:1rem 0; }
+.theme-choice { display:flex; align-items:center; gap:.75rem; margin:0; padding:.7rem; border:1px solid var(--border); border-radius:8px; cursor:pointer; font-weight:500; }
+.theme-choice:has(input:checked) { outline:2px solid var(--primary); outline-offset:1px; }
+.theme-choice input { width:auto; margin:0; accent-color:var(--primary); }
+.theme-swatch { display:flex; width:50px; height:30px; flex:none; border-radius:5px; overflow:hidden; border:1px solid #0002; background:var(--preview-page); }
+.theme-swatch span:first-child { width:65%; background:var(--preview-primary); }
+.theme-swatch span:last-child { width:35%; background:var(--preview-accent); }
+.theme-preview-forest { --preview-page:#f5f6f0; --preview-primary:#355c4a; --preview-accent:#d5a14b; }
+.theme-preview-ocean { --preview-page:#f2f6fa; --preview-primary:#28577a; --preview-accent:#d7a64b; }
+.theme-preview-slate { --preview-page:#f3f4f6; --preview-primary:#344256; --preview-accent:#e68a42; }
+.theme-preview-burgundy { --preview-page:#faf6ef; --preview-primary:#713e48; --preview-accent:#c29a65; }
+@media (max-width:480px) { .theme-options { grid-template-columns:1fr; } }

@@ -1,6 +1,6 @@
 # Vehicle Log
 
-Self-hosted PHP/MySQL odometer log for small groups and families. This is an **initial V1 starter**, not a production-hardened release.
+Self-hosted PHP/MySQL odometer log for small groups and families. This is an **V1.1 development build**, not a production-hardened release.
 
 ## Requirements
 - PHP 8.1+ with PDO MySQL
@@ -9,6 +9,9 @@ Self-hosted PHP/MySQL odometer log for small groups and families. This is an **i
 - HTTPS strongly recommended
 
 Timestamps are currently stored and displayed in UTC. Local timezone presentation is planned.
+
+## Appearance
+Administrators can choose Forest Green (default), Ocean Blue, Slate & Orange, or Burgundy & Cream in Admin > Appearance. The selection applies to the entire installation and is stored in the existing `settings` table. No schema change is needed.
 
 ## Installation
 1. Upload the entire `vehicle-log` folder, e.g. to `https://example.org/vehicle-log/`.
@@ -30,4 +33,4 @@ Timestamps are currently stored and displayed in UTC. Local timezone presentatio
 - The `remember` mode is identification, not authentication. Avoid it for sensitive use cases.
 
 ## Git
-`dontlookhere/config.php` is intentionally ignored. Do not commit credentials. Add a licence before publishing the repository publicly.
+`dontlookhere/config.php` is intentionally ignored. Do not commit credentials. Review licensing before distributing modified versions.
