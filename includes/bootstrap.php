@@ -15,3 +15,15 @@ function driver_id(): ?int { return isset($_SESSION['driver_id']) ? (int)$_SESSI
 function theme(): string { $theme=setting('theme','forest'); return in_array($theme,['forest','ocean','slate','burgundy'],true) ? $theme : 'forest'; }
 function page(string $title): void { echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'.h($title).' | Vehicle Log</title><link rel="stylesheet" href="'.h(url('assets/style.css')).'"></head><body class="theme-'.h(theme()).'"><header><a href="'.h(url()).'">Vehicle Log</a><nav><a href="'.h(url('history.php')).'">History</a> <a href="'.h(url('admin/')).'">Admin</a></nav></header><main><h1>'.h($title).'</h1>'; }
 function end_page(): void { echo '</main><footer class="site-footer">Vehicle Log v1.1.0-dev</footer></body></html>'; }
+
+// Setup has no saved connection yet. Installed sites upgrade before serving pages.
+if (is_file(APP_ROOT.'/dontlookhere/config.php')) {
+    try {
+        require_once APP_ROOT.'/includes/migrations.php';
+        vehicle_log_upgrade(db());
+    } catch (Throwable $e) {
+        error_log('Vehicle Log database upgrade failed: '.$e->getMessage());
+        http_response_code(503);
+        exit('Vehicle Log database upgrade failed. Please contact the site administrator and check the server error log.');
+    }
+}

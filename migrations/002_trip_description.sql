@@ -1,0 +1,1 @@
+ALTER TABLE readings ADD COLUMN trip_description VARCHAR(255) NOT NULL DEFAULT '';

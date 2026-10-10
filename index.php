@@ -18,11 +18,12 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
    header('Location: '.url());exit;
   }
   if (isset($_POST['save'])) {
-   $driver=driver_id();$vehicle=(int)($_POST['vehicle_id']??0);$km=filter_var($_POST['odometer']??'',FILTER_VALIDATE_INT);$type=(string)($_POST['reading_type']??'');
+   $driver=driver_id();$vehicle=(int)($_POST['vehicle_id']??0);$km=filter_var($_POST['odometer']??'',FILTER_VALIDATE_INT);$type=(string)($_POST['reading_type']??'');$description=trim((string)($_POST['trip_description']??''));
+   if (mb_strlen($description,'UTF-8')>255) throw new RuntimeException('Trip description must be 255 characters or fewer.');
    if (!$driver || $km===false || $km<0 || !in_array($type,['start','end'],true)) throw new RuntimeException('Invalid reading.');
    $v=db()->prepare('SELECT id FROM vehicles WHERE id=? AND active=1');$v->execute([$vehicle]);if (!$v->fetch()) throw new RuntimeException('Select a vehicle.');
    $d=db()->prepare('SELECT id FROM drivers WHERE id=? AND active=1');$d->execute([$driver]);if (!$d->fetch()) throw new RuntimeException('Driver unavailable.');
-   $s=db()->prepare('INSERT INTO readings (vehicle_id,driver_id,reading_type,odometer,recorded_at,created_at) VALUES (?,?,?,?,?,?)');$now=gmdate('Y-m-d H:i:s');$s->execute([$vehicle,$driver,$type,$km,$now,$now]);
+   $s=db()->prepare('INSERT INTO readings (vehicle_id,driver_id,reading_type,odometer,trip_description,recorded_at,created_at) VALUES (?,?,?,?,?,?,?)');$now=gmdate('Y-m-d H:i:s');$s->execute([$vehicle,$driver,$type,$km,$description,$now,$now]);
    header('Location: '.url('history.php'));exit;
   }
  } catch(Throwable $e) { $error=$e->getMessage(); }
@@ -49,7 +50,8 @@ elseif (!driver_id()) {
   foreach($vehicles as $v) echo '<option value="'.(int)$v['id'].'">'.h($v['name']).'</option>';
   echo '</select></label><p id="last-reading" class="last-reading" aria-live="polite"></p>';
   echo '<fieldset class="reading-type"><legend>Reading type</legend><label><input type="radio" name="reading_type" value="start" checked> Start</label><label><input type="radio" name="reading_type" value="end"> End</label></fieldset>';
-  echo '<label>Odometer (km)<input name="odometer" type="number" inputmode="numeric" min="0" step="1" required></label><button>Save reading</button></form>';
+  echo '<label>Odometer (km)<input name="odometer" type="number" inputmode="numeric" min="0" step="1" required></label>';
+  echo '<label>Trip description (optional)<input name="trip_description" type="text" maxlength="255" placeholder="e.g. Work, shopping, school pickup"></label><button>Save reading</button></form>';
   echo '<script>const lastReadings='.json_encode($lastByVehicle,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT).';const vehicle=document.getElementById("vehicle_id"),last=document.getElementById("last-reading");function updateLast(){const item=lastReadings[vehicle.value];last.textContent=item?"Last recorded: "+item.km.toLocaleString()+" km ("+item.date+")":"No previous reading for this vehicle";}vehicle.addEventListener("change",updateLast);updateLast();</script>';
  }
 

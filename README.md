@@ -26,7 +26,7 @@ Administrators can choose Forest Green (default), Ocean Blue, Slate & Orange, or
 - PIN and password modes currently use the same driver selection screen; username is stored but username entry is not yet implemented.
 - No rate limiting for driver or administrator login yet. Do not deploy publicly without it.
 - No odometer validation against previous entries, editing, matching journeys, or reporting yet.
-- No migration runner/version tracking beyond the initial SQL schema.
+- Automatic database upgrades run at the first request after new files are uploaded. Database ALTER permissions are required.
 - MariaDB 5.5 is end-of-life and not secure for new public deployments. Compatibility is provided for legacy hosting, not as an endorsement.
 - The setup wizard is not atomic: if schema creation succeeds but config writing fails, manually clean the partially installed database before retrying.
 - `.htaccess` protections require Apache to honour overrides; configure equivalent deny rules for Nginx. **Do not assume a renamed directory is secure.**
@@ -34,3 +34,7 @@ Administrators can choose Forest Green (default), Ocean Blue, Slate & Orange, or
 
 ## Git
 `dontlookhere/config.php` is intentionally ignored. Do not commit credentials. Review licensing before distributing modified versions.
+
+### Upgrading an existing installation to V1.1 (trip descriptions)
+
+Back up your database, then upload the updated files together. On the next page visit, Vehicle Log checks whether the `trip_description` column exists, adds it if missing, and records schema version 2. No manual SQL is required. The database user needs ALTER TABLE permission. Concurrent visits are protected by a database advisory lock. If an upgrade fails, the application shows a maintenance error and logs the details on the server. New installations apply the initial and trip-description SQL during setup.
