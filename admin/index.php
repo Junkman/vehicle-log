@@ -1,0 +1,23 @@
+<?php
+require dirname(__DIR__).'/includes/bootstrap.php';
+$error='';
+if (isset($_GET['logout'])) { unset($_SESSION['admin_id']);header('Location: '.url('admin/'));exit; }
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+ check_csrf();
+ try {
+  if (isset($_POST['login'])) { $q=db()->prepare('SELECT * FROM admins WHERE username=?');$q->execute([trim((string)($_POST['username']??''))]);$a=$q->fetch();if (!$a || !password_verify((string)($_POST['password']??''),$a['password_hash'])) throw new RuntimeException('Incorrect login.');session_regenerate_id(true);$_SESSION['admin_id']=$a['id'];header('Location: '.url('admin/'));exit; }
+  if (!admin()) throw new RuntimeException('Administrator login required.');
+  if (isset($_POST['mode'])) { $mode=(string)$_POST['mode'];if (!in_array($mode,['remember','pin','login'],true)) throw new RuntimeException('Invalid mode.');$q=db()->prepare('UPDATE settings SET value=? WHERE name=?');$q->execute([$mode,'auth_mode']);unset($_SESSION['driver_id']); }
+  if (isset($_POST['vehicle'])) { $name=trim((string)($_POST['name']??''));if (!$name) throw new RuntimeException('Vehicle name required.');$q=db()->prepare('INSERT INTO vehicles (name) VALUES (?)');$q->execute([$name]); }
+  if (isset($_POST['driver'])) { $name=trim((string)($_POST['name']??''));$username=trim((string)($_POST['username']??''));$secret=(string)($_POST['secret']??'');if (!$name) throw new RuntimeException('Driver name required.');if ($secret && strlen($secret)<4) throw new RuntimeException('PIN/password must be at least 4 characters.');$q=db()->prepare('INSERT INTO drivers (name,username,secret_hash) VALUES (?,?,?)');$q->execute([$name,$username?:null,$secret?password_hash($secret,PASSWORD_DEFAULT):null]); }
+  if (isset($_POST['toggle'])) { $table=($_POST['entity']??'')==='vehicle'?'vehicles':(($_POST['entity']??'')==='driver'?'drivers':'');if (!$table) throw new RuntimeException('Invalid entity.');$q=db()->prepare("UPDATE $table SET active=1-active WHERE id=?");$q->execute([(int)$_POST['toggle']]); }
+  header('Location: '.url('admin/'));exit;
+ } catch(Throwable $e) { $error=$e->getMessage(); }
+}
+page('Administration');if($error) echo '<p class="error">'.h($error).'</p>';
+if (!admin()) { echo '<form method="post"><input type="hidden" name="csrf" value="'.h(csrf()).'"><input type="hidden" name="login" value="1"><label>Username<input name="username" required></label><label>Password<input type="password" name="password" required></label><button>Sign in</button></form>';end_page();exit; }
+echo '<p><a href="'.h(url('admin/?logout=1')).'">Admin sign out</a></p><h2>Driver access</h2><form method="post"><input type="hidden" name="csrf" value="'.h(csrf()).'"><label>Mode<select name="mode">';foreach(['remember'=>'Remember driver','pin'=>'Driver PIN','login'=>'Driver password'] as $key=>$label) echo '<option value="'.$key.'" '.(setting('auth_mode')===$key?'selected':'').'>'.$label.'</option>';echo '</select></label><button>Save mode</button></form>';
+echo '<h2>Add vehicle</h2><form method="post"><input type="hidden" name="csrf" value="'.h(csrf()).'"><input type="hidden" name="vehicle" value="1"><label>Vehicle name<input name="name" required></label><button>Add vehicle</button></form>';
+echo '<h2>Add driver</h2><form method="post"><input type="hidden" name="csrf" value="'.h(csrf()).'"><input type="hidden" name="driver" value="1"><label>Driver name<input name="name" required></label><label>Username (reserved for password mode)<input name="username"></label><label>PIN or password (needed for PIN/password mode)<input type="password" name="secret"></label><button>Add driver</button></form>';
+foreach(['vehicles'=>'Vehicles','drivers'=>'Drivers'] as $table=>$title) { echo '<h2>'.h($title).'</h2><ul>';foreach(db()->query("SELECT id,name,active FROM $table ORDER BY name") as $r) { echo '<li>'.h($r['name']).' ('.($r['active']?'active':'inactive').') <form class="inline" method="post"><input type="hidden" name="csrf" value="'.h(csrf()).'"><input type="hidden" name="entity" value="'.($table==='vehicles'?'vehicle':'driver').'"><button name="toggle" value="'.(int)$r['id'].'">'.($r['active']?'Disable':'Enable').'</button></form></li>'; } echo '</ul>'; }
+end_page();
