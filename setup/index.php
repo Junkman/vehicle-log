@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
   $pdo=new PDO("mysql:host=$host;port=$port;dbname=$name;charset=utf8mb4",$user,$pass,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
   foreach (glob(APP_ROOT.'/migrations/*.sql') as $file) { $sql=file_get_contents($file); foreach (array_filter(array_map('trim',explode(';',$sql))) as $statement) $pdo->exec($statement); }
   $q=$pdo->prepare('INSERT INTO admins (username,password_hash) VALUES (?,?)');$q->execute([$adminUser,password_hash($adminPass,PASSWORD_DEFAULT)]);
-  $q=$pdo->prepare('INSERT INTO settings (name,value) VALUES (?,?)');$q->execute(['auth_mode','remember']);$q->execute(['schema_version','2']);
+  $q=$pdo->prepare('INSERT INTO settings (name,value) VALUES (?,?)');$q->execute(['auth_mode','remember']);$q->execute(['schema_version','3']);
   $config='<?php'."\nreturn ".var_export(['db'=>['host'=>$host,'port'=>$port,'name'=>$name,'user'=>$user,'password'=>$pass]],true).";\n";
   $target=APP_ROOT.'/dontlookhere/config.php';
   if (file_put_contents($target,$config,LOCK_EX)===false) throw new RuntimeException('Unable to save config.php. Check folder permissions.');

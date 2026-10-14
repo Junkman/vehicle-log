@@ -10,6 +10,9 @@ Self-hosted PHP/MySQL odometer log for small groups and families. This is an **V
 
 Timestamps are currently stored and displayed in UTC. Local timezone presentation is planned.
 
+## Recording journeys
+Start Trip is the default. An unfinished trip appears on the main page for its original driver to finish. Alternatively choose Enter completed trip to supply both odometer readings at once. Each journey is stored as one row in `trips`. Only one unfinished trip per vehicle is allowed. Existing individual `readings` are kept and shown separately in History; they are not automatically paired. Times are recorded in UTC.
+
 ## Appearance
 Administrators can choose Forest Green (default), Ocean Blue, Slate & Orange, or Burgundy & Cream in Admin > Appearance. The selection applies to the entire installation and is stored in the existing `settings` table. No schema change is needed.
 
@@ -25,7 +28,7 @@ Administrators can choose Forest Green (default), Ocean Blue, Slate & Orange, or
 ## Important limitations of this starter
 - PIN and password modes currently use the same driver selection screen; username is stored but username entry is not yet implemented.
 - No rate limiting for driver or administrator login yet. Do not deploy publicly without it.
-- No odometer validation against previous entries, editing, matching journeys, or reporting yet.
+- Odometer entries are checked for non-negative values and finish >= start, but not against all historical vehicle readings. No trip editing, reporting or historical timestamp entry yet.
 - Automatic database upgrades run at the first request after new files are uploaded. Database ALTER permissions are required.
 - MariaDB 5.5 is end-of-life and not secure for new public deployments. Compatibility is provided for legacy hosting, not as an endorsement.
 - The setup wizard is not atomic: if schema creation succeeds but config writing fails, manually clean the partially installed database before retrying.
@@ -35,6 +38,6 @@ Administrators can choose Forest Green (default), Ocean Blue, Slate & Orange, or
 ## Git
 `dontlookhere/config.php` is intentionally ignored. Do not commit credentials. Review licensing before distributing modified versions.
 
-### Upgrading an existing installation to V1.1 (trip descriptions)
+### Upgrading an existing installation to V1.1 (trips)
 
-Back up your database, then upload the updated files together. On the next page visit, Vehicle Log checks whether the `trip_description` column exists, adds it if missing, and records schema version 2. No manual SQL is required. The database user needs ALTER TABLE permission. Concurrent visits are protected by a database advisory lock. If an upgrade fails, the application shows a maintenance error and logs the details on the server. New installations apply the initial and trip-description SQL during setup.
+Back up your database, then upload the updated files together. On the next page visit, Vehicle Log checks whether the `trip_description` column exists, adds it if missing, and records schema version 2, then creates the `trips` table and records schema version 3. No manual SQL is required. The database user needs ALTER TABLE permission. Concurrent visits are protected by a database advisory lock. If an upgrade fails, the application shows a maintenance error and logs the details on the server. New installations apply all three migration SQL files during setup.

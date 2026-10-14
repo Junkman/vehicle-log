@@ -18,12 +18,14 @@ function vehicle_log_upgrade(PDO $pdo): void
         if (!$columns) {
             $pdo->exec("ALTER TABLE readings ADD COLUMN trip_description VARCHAR(255) NOT NULL DEFAULT ''");
         }
+        // Retain legacy readings unchanged; new journeys use a separate trips table.
+        $pdo->exec(file_get_contents(APP_ROOT.'/migrations/003_trips.sql'));
         $stmt = $pdo->prepare('UPDATE settings SET value = ? WHERE name = ?');
-        $stmt->execute(['2', 'schema_version']);
+        $stmt->execute(['3', 'schema_version']);
         if ($stmt->rowCount() === 0) {
-            // UPDATE can return zero if the value is already 2; REPLACE handles both cases.
+            // UPDATE can return zero if the value is already 3; REPLACE handles both cases.
             $stmt = $pdo->prepare('REPLACE INTO settings (name, value) VALUES (?, ?)');
-            $stmt->execute(['schema_version', '2']);
+            $stmt->execute(['schema_version', '3']);
         }
     } finally {
         $stmt = $pdo->prepare('SELECT RELEASE_LOCK(?)');

@@ -57,3 +57,10 @@ body.theme-burgundy { --page:#faf6ef; --primary:#713e48; --primary-hover:#552e36
 .theme-preview-slate { --preview-page:#f3f4f6; --preview-primary:#344256; --preview-accent:#e68a42; }
 .theme-preview-burgundy { --preview-page:#faf6ef; --preview-primary:#713e48; --preview-accent:#c29a65; }
 @media (max-width:480px) { .theme-options { grid-template-columns:1fr; } }
+
+/* Single-record trip entry */
+.open-trip { padding:1rem; margin:1rem 0; border:1px solid var(--border); border-left:4px solid var(--accent); background:var(--subtle); border-radius:8px; }
+.open-trip h2 { margin-top:0; }
+.open-trip form { margin-bottom:0; }
+#finish-fields[hidden] { display:none; }
+summary { cursor:pointer; font-weight:600; padding:1rem 0; }
